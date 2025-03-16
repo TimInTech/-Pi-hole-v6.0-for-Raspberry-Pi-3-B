@@ -4,8 +4,8 @@
 ![Pi-hole v6.0 Dashboard](https://github.com/user-attachments/assets/b0ad4d03-d118-4781-8dce-0a9956a978f2)  
 
 🔗 **Official Resources**  
-[GitHub Repository](https://github.com/pi-hole/pi-hole) | [v6 Migration Guide](https://docs.pi-hole.net/docker/upgrading/v5-v6/)  
-**Recommended Hardware**: [Raspberry Pi 3 B Starter Kit](https://amzn.to/your-affiliate-link)  
+[Pi-hole GitHub](https://github.com/pi-hole/pi-hole) | [v6 Migration Guide](https://docs.pi-hole.net/docker/upgrading/v5-v6/)  
+**Recommended Hardware**: [Raspberry Pi 4 Starter Kit](https://www.amazon.de/Raspberry-Starter-Kit-Netzteil-Geh%C3%A4use-K%C3%BChlk%C3%B6rper/dp/B0D1N3V2FF?tag=pinterestd00b-21) *(Compatible with Pi 3 B)*  
 
 ---
 
@@ -25,8 +25,8 @@
 |-----------|---------------|  
 | **Raspberry Pi** | 3 Model B (ARMv6) |  
 | **OS** | [Raspberry Pi OS (Legacy) Lite (32-bit)](https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2023-12-11/) |  
-| **Storage** | 16GB+ MicroSD Card ([SanDisk Extreme](https://amzn.to/your-affiliate-link)) |  
-| **Power** | 5V/2.5A Power Supply |  
+| **Storage** | 16GB+ MicroSD Card |  
+| **Power Supply** | 5V/2.5A |  
 
 **Why ARMv6?**  
 Pi-hole v6 requires Debian Bullseye (11), which is only fully compatible with the legacy OS on Raspberry Pi 3 B.  
@@ -41,8 +41,6 @@ Pi-hole v6 requires Debian Bullseye (11), which is only fully compatible with th
    Raspberry Pi OS (Other) → Raspberry Pi OS (Legacy) Lite (32-bit)
    ```  
 3. Enable SSH: Click the gear icon → Enable SSH → Set password  
-
-![Pi-hole OS Selection](https://via.placeholder.com/800x400.png/007ACC/FFFFFF?text=Legacy+OS+Selection+for+RPi+3B)  
 
 ### Step 2: First Boot  
 ```bash
@@ -74,13 +72,13 @@ curl -sSL https://install.pi-hole.net | PIHOLE_SKIP_OS_CHECK=true sudo -E bash
 ### 1. Create Your Whitelist  
 1. Create a `whitelist.txt` file:  
    ```plaintext
-   # Custom Whitelist
+   # Example Whitelist
    alexa.amazon.com
    device-metrics.us  
    *.tuya.com
    ```  
 2. Host it privately:  
-   - **GitHub Private Repo**: Upload and get the raw URL  
+   - **GitHub Private Repo**: Upload and use the raw URL  
    - **Local Server**: Use `python3 -m http.server 8000`  
 
 ### 2. Auto-Update Script  
