@@ -15,8 +15,9 @@
 3. [Pi-hole Setup](#-pi-hole-setup)  
 4. [Whitelist Automation](#-whitelist-automation)  
 5. [Maintenance](#-maintenance)  
-6. [Troubleshooting](#-troubleshooting)  
-7. [FAQ](#-faq)  
+
+🛠️ Pi-hole v6 - Troubleshooting Guide
+6. [Troubleshooting](TROUBLESHOOTING.md)  
 
 ---
 
