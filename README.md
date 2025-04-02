@@ -109,7 +109,7 @@ sudo crontab -e
 ### 1. Regular Updates  
 ```bash
 # Update Pi-hole
-pihole -up
+sudo pihole -up
 
 # Update OS
 sudo apt update && sudo apt upgrade -y
@@ -118,10 +118,10 @@ sudo apt update && sudo apt upgrade -y
 ### 2. Backup/Restore  
 ```bash
 # Export settings
-pihole -a -t
+sudo pihole -a -t
 
 # Restore
-pihole -a -r /path/to/backup.tar.gz
+sudo pihole -a -r /path/to/backup.tar.gz
 ```  
 
 ---
