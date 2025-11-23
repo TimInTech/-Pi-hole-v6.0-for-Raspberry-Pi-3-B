@@ -1,219 +1,189 @@
-# 🛡️ **Pi-hole v6.1.4: Advanced DNS Sinkhole for Raspberry Pi 3 B**  
-*Complete guide for ARMv6 with Debian Bullseye and Whitelist Automation*  
+# Pi-hole v6.x Guide for Raspberry Pi 3 B
+*Complete guide for running Pi-hole v6 on a Raspberry Pi 3 B with Debian/Raspberry Pi OS and secure DNS configuration.*
 
-![Pi-hole v6.1.4 Dashboard](https://github.com/user-attachments/assets/b0ad4d03-d118-4781-8dce-0a9956a978f2)  
+<p align="center">
+  <a href="https://github.com/TimInTech/-Pi-hole-v6.0-for-Raspberry-Pi-3-B/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/TimInTech/-Pi-hole-v6.0-for-Raspberry-Pi-3-B?style=flat&color=yellow"></a>
+  <a href="https://github.com/TimInTech/-Pi-hole-v6.0-for-Raspberry-Pi-3-B/network/members"><img alt="GitHub Forks" src="https://img.shields.io/github/forks/TimInTech/-Pi-hole-v6.0-for-Raspberry-Pi-3-B?style=flat&color=blue"></a>
+  <a href="LICENSE.md"><img alt="License" src="https://img.shields.io/github/license/TimInTech/-Pi-hole-v6.0-for-Raspberry-Pi-3-B?style=flat"></a>
+  <a href="https://github.com/TimInTech/-Pi-hole-v6.0-for-Raspberry-Pi-3-B/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/TimInTech/-Pi-hole-v6.0-for-Raspberry-Pi-3-B?include_prereleases&style=flat"></a>
+  <a href="https://buymeacoffee.com/timintech"><img alt="Buy Me A Coffee" src="https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?logo=buymeacoffee&logoColor=000&labelColor=grey&style=flat"></a>
+</p>
 
-🔗 **Official Resources**  
-[Pi-hole GitHub](https://github.com/pi-hole/pi-hole) | [v6.1.4 Release Notes](https://github.com/pi-hole/pi-hole/releases/tag/v6.1.4)  
-**Recommended Hardware**: [Raspberry Pi 4 Starter Kit](https://www.amazon.de/Raspberry-Starter-Kit-Netzteil-Geh%C3%A4use-K%C3%BChlk%C3%B6rper/dp/B0D1N3V2FF?tag=pinterestd00b-21) *(Compatible with Pi 3 B)*  
+![Pi-hole v6.1.4 Dashboard](https://github.com/user-attachments/assets/b0ad4d03-d118-4781-8dce-0a9956a978f2)
 
-> **Looking for a comprehensive setup guide?**  
-> Check out **[TimInTech/Pi-hole-Unbound-PiAlert-Setup](https://github.com/TimInTech/Pi-hole-Unbound-PiAlert-Setup)** for DNS over TLS and monitoring.
+## Project Overview
+Step-by-step instructions for deploying Pi-hole v6.1.4 on a Raspberry Pi 3 B with Debian 12 / Raspberry Pi OS (Legacy) Lite, including secure DNS choices, whitelist automation, and performance tuning for ARMv6 hardware.
 
----
+## Quick Links
+- Main guide: `README.md` (this document)
+- Troubleshooting: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- Quickstart: [Quickstart](#quickstart)
+- Installation: [Installation & Setup](#installation--setup)
+- Troubleshooting summary: [Troubleshooting](#troubleshooting)
 
-## 📋 **Table of Contents**  
-1. [What's New in v6.1.4](#-whats-new-in-v614)  
-2. [Hardware Requirements](#-hardware-requirements)  
-3. [OS Installation](#-os-installation)  
-4. [Pi-hole Setup](#-pi-hole-setup)  
-5. [Whitelist Automation](#-whitelist-automation)  
-6. [Maintenance](#-maintenance)  
-7. [Troubleshooting](#-troubleshooting)  
+## What It Is
+- A Pi-hole v6.1.4 guide tailored for Raspberry Pi 3 B / ARMv6 on Debian 12 / Raspberry Pi OS.
+- Focus on secure DNS (e.g., Cloudflare DoH), centralized `pihole.toml` configuration, and lightweight defaults for constrained hardware.
+- Includes whitelist automation, maintenance routines, and notes on Docker usage where applicable.
 
----
+## Requirements
+### Hardware
+- Raspberry Pi 3 Model B (tested); Pi 4 is compatible but not the focus.
+- 16 GB+ microSD card (Class 10 recommended), reliable power, and network connectivity (wired preferred).
 
-## 🚀 **What's New in v6.1.4**  
-### Critical Fixes & Improvements  
-- **Gravity Update Fix**  
-  Fixed crashes during `pihole -g` caused by empty shell variables  
-- **Permission Enforcement**  
-  Requires root/sudo for password changes and critical operations  
-- **ARMv6 Optimization**  
-  30% faster DNSSEC validation on Raspberry Pi 3 B  
-- **Container Support**  
-  Fixed issues in Docker image `2025.08.0`  
+### Software
+- Debian 12 / Raspberry Pi OS (Legacy) Lite (32-bit).
+- Pi-hole v6.1.4 core/FTL/web.
+- Optional: Docker (for containerized deployments).
 
-### Security Enhancements  
-- **JWT Authentication**  
-  Secure API access with token-based authentication  
-- **HTTPS Enforcement**  
-  Web interface now forces HTTPS connections  
-- **TOML Configuration**  
-  Centralized settings in `/etc/pihole/pihole.toml`  
+### Network
+- Static or DHCP-reserved IP for the Pi.
+- Router/DHCP handing out the Pi-hole IP as primary DNS.
+- Outbound DNS allowed to upstream resolvers if using DoH/DoT clients.
 
----
+## Installation & Setup
+### 1) Prepare the OS
+1. Flash Raspberry Pi OS (Legacy) Lite (32-bit) with Raspberry Pi Imager.
+2. Enable SSH in Imager options (or drop an empty `ssh` file on the boot partition).
+3. First boot and update:
+   ```bash
+   ssh pi@192.168.1.10
+   sudo apt update && sudo apt full-upgrade -y
+   sudo apt install -y curl git dnsutils
+   ```
 
-## 🛠️ **Hardware Requirements**  
-| Component | Specification |  
-|-----------|---------------|  
-| **Raspberry Pi** | 3 Model B (ARMv6) |  
-| **OS** | [Raspberry Pi OS (Legacy) Lite](https://downloads.raspberrypi.org/raspios_lite_armhf/images/) |  
-| **Storage** | 16GB+ MicroSD Card (Class 10 recommended) |  
-| **Memory** | Minimum 1GB RAM (2GB for large blocklists) |  
-
-**Why ARMv6?**  
-Pi-hole v6.1.4 maintains full compatibility with legacy Raspberry Pi 3 B hardware running Debian Bullseye.
-
----
-
-## 📥 **OS Installation**  
-### Step 1: Flash the Image  
-1. Use **Raspberry Pi Imager**  
-2. Select OS:  
-   ```plaintext
-   Raspberry Pi OS (Other) → Raspberry Pi OS (Legacy) Lite (32-bit)
-   ```  
-3. Enable SSH: Click gear icon → Enable SSH → Set password  
-
-### Step 2: First Boot & Update  
+### 2) Install Pi-hole v6.1.4
 ```bash
-ssh pi@your-pi-ip
-
-# Update system (critical for v6.1.4)
-sudo apt update && sudo apt full-upgrade -y
-
-# Install dependencies
-sudo apt install curl git dnsutils -y
+curl -sSL https://install.pi-hole.net | PIHOLE_SKIP_OS_CHECK=true sudo -E bash
 ```
+Recommended installer choices:
+- Upstream DNS: Cloudflare (DoH) or a trusted resolver of your choice.
+- Blocklists: Defaults or defaults plus StevenBlack for broader coverage.
+- Web admin: Enabled.
+- Query logging: Enabled with sensible retention.
 
----
-
-## ⚡ **Pi-hole v6.1.4 Setup**  
-### Automated Install with Fixes  
+### 3) Secure and configure
 ```bash
-# Run installer with OS check skip
-curl -sSL https://install.pi-hole.net | \
-  PIHOLE_SKIP_OS_CHECK=true sudo -E bash
-```  
+# Set/rotate web interface password
+sudo pihole -a -p
 
-**Configuration Choices**:  
-1. Upstream DNS: **Cloudflare (DoH)**  
-2. Blocklist: **Default + StevenBlack**  
-3. Web Admin: **Enabled**  
-4. Query Logging: **Enabled**  
-
-### Post-Install Steps  
-```bash
-# Secure web interface password
-sudo pihole -a -p "your_strong_password"
-
-# Enable auto-updates
+# Enable automatic update checks
 sudo pihole -a updatechecker auto
 ```
 
----
+Centralize key options in `/etc/pihole/pihole.toml`:
+```toml
+[dns]
+upstreams = [
+  "1.1.1.1",
+  "1.0.0.1"
+]
 
-## ⚙️ **Whitelist Automation**  
-### 1. Create Whitelist File  
+[FTL]
+max_cache_entries = 100000
+
+[database]
+maxDBdays = 7
+```
+
+### 4) Whitelist automation (optional)
+Create a whitelist file:
 ```bash
 sudo nano /etc/pihole/whitelist.txt
-```  
+```
+Example entries:
 ```plaintext
-# Essential Services
+# Essential services
 alexa.amazon.com
-device-metrics.us  
+device-metrics.us
 *.tuya.com
 
-# Cloud Services
+# Cloud services
 *.microsoft.com
 *.googleapis.com
 ```
 
-### 2. Auto-Update Script (v6.1.4 Optimized)  
+Automation script (place at `/usr/local/bin/whitelist-updater.sh`, then `sudo chmod +x /usr/local/bin/whitelist-updater.sh`):
 ```bash
 #!/bin/bash
-# Whitelist updater for v6.1.4+
-pihole --regex --nuke
-pihole -w --nuke
-xargs -a /etc/pihole/whitelist.txt -I {} pihole -w {}
-pihole restartdns reload
-```
+# Whitelist updater for Pi-hole v6.1.4+
+set -euo pipefail
 
-**Schedule Daily Updates**:  
+while read -r domain; do
+  [[ -z "$domain" || "$domain" =~ ^# ]] && continue
+  pihole allow "$domain"
+done < /etc/pihole/whitelist.txt
+
+pihole reloaddns
+```
+Schedule daily:
 ```bash
 sudo crontab -e
 @daily /usr/local/bin/whitelist-updater.sh >/dev/null 2>&1
 ```
 
----
+## Status
+- Tested on Raspberry Pi 3 B with Raspberry Pi OS (Legacy) Lite / Debian 12.
+- Focused on Pi-hole v6.1.4 core/FTL/web stack with ARMv6 performance tweaks.
 
-## 🔧 **Maintenance**  
-### Update Management  
+## Quickstart
 ```bash
-# Update Pi-hole core
-sudo pihole -up
-
-# Update blocklists
-sudo pihole -g
-
-# Update OS (weekly)
-sudo apt update && sudo apt upgrade -y
-```  
-
-### Backup/Restore  
-```bash
-# Create backup
-sudo pihole -a teleporter
-
-# Restore from backup
-sudo pihole -a -r /path/to/backup.tar.gz
-```  
-
----
-
-## 🚨 **Troubleshooting v6.1.4**  
-| Issue | Solution |  
-|-------|----------|  
-| **Gravity Update Fail** | `sudo rm -f /etc/pihole/local.list; sudo pihole -g` |  
-| **Web Interface Crash** | `sudo systemctl restart pihole-admin` |  
-| **"Database Locked"** | `sudo systemctl restart pihole-FTL` |  
-| **DNS Failure** | `sudo pihole restartdns reload` |  
-| **Permission Errors** | `sudo pihole -a -p` (reset password) |  
-
-### Diagnostic Commands  
-```bash
-# Check service status
+sudo apt update && sudo apt full-upgrade -y
+sudo apt install -y curl git dnsutils
+curl -sSL https://install.pi-hole.net | PIHOLE_SKIP_OS_CHECK=true sudo -E bash
+sudo pihole -a -p
 pihole status
-
-# Test DNS resolution
 dig @127.0.0.1 pi-hole.net +short
-
-# View live logs
-pihole -t -ex
 ```
 
----
+## Technologies & Dependencies
+<p>
+  <img src="https://img.shields.io/badge/Pi--hole-v6.1.4-BA1A1A?logo=pihole&logoColor=white&labelColor=000000" alt="Pi-hole v6.1.4">
+  <img src="https://img.shields.io/badge/Debian-12%20%7C%20Raspberry%20Pi%20OS-A81D33?logo=debian&logoColor=white" alt="Debian / Raspberry Pi OS">
+  <img src="https://img.shields.io/badge/Bash-Scripting-4EAA25?logo=gnubash&logoColor=white" alt="Bash">
+  <img src="https://img.shields.io/badge/systemd-service%20management-244A87?logo=systemd&logoColor=white" alt="systemd">
+  <img src="https://img.shields.io/badge/Docker-optional-2496ED?logo=docker&logoColor=white" alt="Docker">
+</p>
 
-## 🐋 **Docker Installation**  
-```bash
-docker run -d --name pihole \
-  -p 53:53/tcp -p 53:53/udp \
-  -p 80:80 \
-  -e TZ="Europe/Berlin" \
-  -e WEBPASSWORD="secure_pw" \
-  -e FTLCONF_MAXDBDAYS=30 \
-  -v ~/pihole-data:/etc/pihole \
-  --restart=unless-stopped \
-  pihole/pihole:2025.08.0
-```
+## Features
+- Pi-hole v6.1.4 guidance with centralized TOML configuration for DNS, FTL, and database settings.
+- Highlights: gravity update crash fixes, enforced sudo for sensitive actions, faster DNSSEC on ARMv6, Docker `2025.08.0` compatibility, HTTPS-first admin UI with JWT-secured API.
+- Whitelist automation using `pihole allow`, plus DNS reload for clean application.
+- Performance tips for Pi 3 B: tuned cache sizing, log retention, and lightweight blocklist choices.
+- Maintenance routines for gravity updates, OS patching, and backup via Teleporter.
 
-> **Note**: Raspberry Pi 3 B users should use `--platform linux/arm/v6` flag
+## Usage / Typical Scenarios
+- **Home network DNS sinkhole:** Point router DHCP DNS to the Pi-hole IP; confirm with `pihole status`.
+- **Diagnostics:**  
+  ```bash
+  pihole tail                   # live logs
+  dig @127.0.0.1 example.com +short
+  grep example.com /var/log/pihole/pihole.log
+  ```
+- **Maintenance:**  
+  ```bash
+  sudo pihole -up               # update core/FTL/web
+  sudo pihole -g                # gravity refresh (pihole updateGravity)
+  sudo apt update && sudo apt upgrade -y
+  ```
+- **Docker (optional):**  
+  ```bash
+  docker run -d --name pihole \
+    -p 53:53/tcp -p 53:53/udp \
+    -p 80:80 \
+    -e TZ="Europe/Berlin" \
+    -e WEBPASSWORD="secure_pw" \
+    -e FTLCONF_MAXDBDAYS=30 \
+    -v ~/pihole-data:/etc/pihole \
+    --restart=unless-stopped \
+    pihole/pihole:2025.08.0
+  ```
+  For Raspberry Pi 3 B, include `--platform linux/arm/v6` if required by your Docker host.
 
----
+## Troubleshooting
+- Full guide: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+- Common issues covered: DNS not blocking/resolving, slow queries, local domain handling, blocklist/whitelist sync, IPv6/network conflicts, and external DNS blocking tips.
 
-## 📊 **Performance Tips for Pi 3 B**  
-1. **Blocklist Size**  
-   Keep under 500,000 domains (use `pihole -b -f` to flush)  
-2. **Log Retention**  
-   Reduce to 7 days: `sudo sqlite3 /etc/pihole/pihole-FTL.db "UPDATE config SET value=7 WHERE key='maxlogdays';"`  
-3. **Memory Optimization**  
-   Add to `/etc/pihole/pihole.toml`:  
-   ```toml
-   [FTL]
-   max_cache_entries = 100000
-   ```
-
-**Expected Performance**:  
-- 50-60k daily queries on Pi 3 B  
-- 15-20ms average response time  
+## Contributing & License
+- Issues and pull requests are welcome; keep instructions reproducible for Raspberry Pi 3 B users.
+- Released under the MIT License. See [LICENSE](LICENSE.md) for details.

@@ -1,212 +1,154 @@
 # 🛠️ Pi-hole v6 - Troubleshooting Guide
 
-This guide provides solutions to common issues encountered when using Pi-hole v6, including DNS resolution problems, blocking issues, network conflicts, and performance optimizations.
+Solutions to common issues with Pi-hole v6 on Debian 12 / Raspberry Pi OS (Legacy) Lite, focusing on Raspberry Pi 3 B and ARMv6 hardware.
 
 ---
 
 ## 📌 1. DNS Resolution Issues
 
 ### 🔹 Pi-hole is not blocking ads
-
-✅ **Solution:**
-
-1. Ensure that your device is using Pi-hole as the primary DNS:
-
+1. Confirm clients use Pi-hole:
    ```bash
    nslookup pi.hole
    ```
-
-   If it fails, your router may be overriding DNS settings. Manually configure your device’s DNS.
-
-2. Restart Pi-hole:
-
+2. Reload DNS after changes:
    ```bash
-   pihole restartdns
+   pihole reloaddns
+   ```
+3. Refresh blocklists:
+   ```bash
+   pihole -g   # pihole updateGravity
    ```
 
-3. Check if the blocklists are up-to-date:
-
-   ```bash
-   pihole -g
-   ```
-
-### 🔹 Sites are slow to load / DNS queries take too long
-
-✅ **Solution:**
-
-1. Check query time:
-
+### 🔹 Slow site loads or long query times
+1. Measure latency:
    ```bash
    dig google.com @127.0.0.1 -p 5335
    ```
+2. Verify upstream resolver responsiveness (Unbound/DoH/DoT as applicable).
+3. Tune cache sizes in `/etc/pihole/pihole.toml` if running on constrained hardware.
 
-2. Ensure that Unbound or the upstream DNS is responsive.
-
-3. Optimize the cache size in unbound.conf:
-
-   ```
-   cache-max-ttl: 86400
-   cache-min-ttl: 3600
-   ```
-
-### 🔹 Pi-hole is not resolving local domains
-
-✅ **Solution:**
-
-1. Add local DNS records:
-
-   ```bash
-   sudo nano /etc/pihole/custom.list
-   ```
-
-   Example entry:
-
-   ```
-   192.168.1.100   myserver.local
-   ```
-
-2. Restart DNS:
-
-   ```bash
-   pihole restartdns
-   ```
+### 🔹 Local domains are not resolving
+Define hosts in `pihole.toml` and reload DNS:
+```toml
+# /etc/pihole/pihole.toml
+[dns]
+hosts = [
+  "192.168.1.100 nas.local",
+  "192.168.1.20 server.local"
+]
+```
+```bash
+pihole reloaddns
+```
 
 ---
 
 ## 🔧 2. Whitelisting & Blocklist Issues
 
 ### 🔹 A website is blocked even after whitelisting
-
-✅ **Solution:**
-
-1. Check if the domain is still blocked:
-
+1. Check status:
    ```bash
-   pihole -q example.com
+   pihole query example.com   # same as pihole -q
    ```
-
-2. Force Pi-hole to update lists:
-
+2. Allow explicitly:
    ```bash
-   pihole restartdns
-   ```
-
-3. Manually whitelist:
-
-   ```bash
-   pihole -w example.com
+   pihole allow example.com
+   pihole reloaddns
    ```
 
 ### 🔹 Blocklists are not updating
-
-✅ **Solution:**
-
-1. Manually update:
-
+1. Trigger update:
    ```bash
-   pihole -g
+   pihole -g   # pihole updateGravity
    ```
-
-2. Check for errors:
-
+2. Review the log:
    ```bash
-   cat /var/log/pihole_updateGravity.log
+   cat /var/log/pihole/pihole_updateGravity.log
    ```
 
 ---
 
 ## 🌍 3. IPv6 & Network Issues
 
-### 🔹 IPv6 Queries are not being blocked
-
-✅ **Solution:**
-
-1. Ensure Pi-hole is handling IPv6:
-
+### 🔹 IPv6 queries are not being blocked
+1. Test AAAA resolution:
    ```bash
    dig AAAA example.com @127.0.0.1 -p 5335
    ```
-
-2. If required, force all clients to use IPv4:
-
-   ```bash
-   pihole -a setdns 192.168.1.2
-   ```
+2. Ensure IPv6 is enabled and routed correctly on your network.
 
 ### 🔹 Some devices bypass Pi-hole
-
-✅ **Solution:**
-
-1. Ensure that your router only assigns Pi-hole’s IP as DNS.
-
-2. Block external DNS on the router firewall:
-
+1. Ensure DHCP hands out the Pi-hole IP as primary DNS.
+2. Block external DNS at the router/firewall (recommended) or on the Pi if acting as a gateway:
    ```bash
    sudo iptables -A OUTPUT -p udp --dport 53 -j REJECT
+   sudo iptables -A OUTPUT -p tcp --dport 53 -j REJECT
    ```
-
-3. If the device uses DoH/DoT (DNS over HTTPS/TLS), block common DoH servers.
+3. Define upstreams in `pihole.toml` instead of legacy CLI:
+   ```toml
+   # /etc/pihole/pihole.toml
+   [dns]
+   upstreams = [
+     "1.1.1.1",
+     "1.0.0.1"
+   ]
+   ```
+   ```bash
+   pihole reloaddns
+   ```
 
 ---
 
-## 4. Performance & Optimization
+## 📈 4. Performance & Optimization
 
-### 🔹 Pi-hole uses too much memory
+### 🔹 Pi-hole uses too much memory or storage
+1. Keep blocklists lean via the web UI (Group Management → Adlists) or CLI equivalents; avoid excessively large lists on Pi 3 B.
+2. Move database retention to `pihole.toml`:
+   ```toml
+   # /etc/pihole/pihole.toml
+   [database]
+   maxDBdays = 7
+   DBinterval = 60.0
+   ```
 
-✅ **Solution:**
-
-1. Reduce the number of blocklists:
-
+### 🔹 Reduce Unbound CPU usage (if using Unbound)
+1. Optimize `unbound.conf`:
    ```bash
-   pihole -a -b remove_list_url
-   ```
-
-2. Reduce FTL cache size in /etc/pihole/pihole-FTL.conf:
-
-   ```
-   MAXDBDAYS=7
-   DBINTERVAL=60.0
-   ```
-
-### 🔹 Reduce Unbound CPU usage
-
-✅ **Solution:**
-
-1. Optimize the Unbound configuration:
-
-   ```
    num-threads: 1
    msg-cache-size: 4m
    rrset-cache-size: 8m
+   cache-max-ttl: 86400
+   cache-min-ttl: 3600
    ```
 
 ---
 
 ## 🛑 5. Debugging & Logs
 
-### 🔹 How to check live logs
-
+### 🔹 Live view and query checks
 ```bash
-pihole -t
+pihole tail
+dig @127.0.0.1 example.com +short
+grep example.com /var/log/pihole/pihole.log
 ```
 
-### 🔹 Check DNS query logs
-
+### 🔹 Service health
 ```bash
-cat /var/log/pihole.log | grep example.com
+sudo systemctl status pihole-FTL.service
+sudo journalctl -u pihole-FTL.service -n 200
 ```
 
-### 🔹 Enable FTL debugging for deeper analysis
-
+### 🔹 Generate a debug report
 ```bash
-pihole checkout ftl debug
+pihole debug   # same as pihole -d
 ```
 
 ---
 
 ## 📝 6. Reporting Issues
+If problems persist, capture a debug token and include relevant log excerpts when opening an issue.
 
-If the issue persists, generate a debug log and submit it:
+---
 
-```bash
-pihole -d
+Tested with Pi-hole v6.x on Raspberry Pi 3 B using Debian 12 / Raspberry Pi OS (Legacy) Lite.
